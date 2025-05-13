@@ -1,0 +1,209 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сборка эргономичной клавиатуры</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body.dark {
+      background-color: #1a202c;
+      color: #e2e8f0;
+    }
+    .dark a {
+      color: #63b3ed;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans transition-colors duration-300">
+  <header class="bg-blue-600 text-white py-6">
+    <div class="container mx-auto px-4">
+      <h1 class="text-3xl font-bold">Сборка эргономичной клавиатуры: Полное руководство</h1>
+      <p class="mt-2">Узнайте, как создать свою собственную эргономичную клавиатуру с нуля!</p>
+      <button id="theme-toggle" class="mt-4 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">Переключить тему</button>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- Introduction -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Что такое эргономичная клавиатура?</h2>
+      <p class="mb-4">Эргономичная клавиатура — это устройство, разработанное для минимизации напряжения рук, запястий и плеч при наборе текста. Такие клавиатуры часто имеют разделённую конструкцию, наклонные или ортогональные раскладки и механические переключатели для комфортной работы.</p>
+      <p class="mb-4">В этом руководстве мы подробно разберём процесс сборки эргономичной клавиатуры, включая выбор компонентов, инструменты и пошаговые инструкции.</p>
+      <!-- Placeholder for image -->
+      <div class="bg-gray-200 h-64 flex items-center justify-center my-4">
+        <p class="text-gray-500">[Изображение: пример эргономичной клавиатуры, например, ErgoDox или Kinesis]</p>
+      </div>
+    </section>
+
+    <!-- Step-by-Step Guide -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Пошаговое руководство по сборке</h2>
+      <div class="space-y-8">
+        <!-- Step 1 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 1: Выбор компонентов</h3>
+          <p>Для сборки вам понадобятся следующие компоненты:</p>
+          <ul class="list-disc pl-6 mb-4">
+            <li><strong>Плата клавиатуры</strong>: Например, ErgoDox EZ, Moonlander или самодельная плата на основе QMK.</li>
+            <li><strong>Переключатели</strong>: Механические (Cherry MX, Gateron, Kailh) или низкопрофильные.</li>
+            <li><strong>Кейкапы</strong>: Совместимые с выбранными переключателями (например, DSA или OEM профиль).</li>
+            <li><strong>Корпус</strong>: 3D-печатный или готовый корпус для вашей модели.</li>
+            <li><strong>Микроконтроллер</strong>: Обычно встроен в плату (например, ATmega32U4).</li>
+            <li><strong>Кабели и разъёмы</strong>: USB-C или TRRS для соединения половин клавиатуры.</li>
+            <li><strong>Стабилизаторы</strong>: Для больших клавиш (если используются).</li>
+          </ul>
+          <p>Совет: Выбирайте компоненты, совместимые с прошивкой QMK для настройки раскладки.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 2: Подготовка инструментов</h3>
+          <p>Вам понадобятся:</p>
+          <ul class="list-disc pl-6 mb-4">
+            <li>Паяльник с регулируемой температурой (15-30 Вт).</li>
+            <li>Припой (рекомендуется 60/40 или бессвинцовый).</li>
+            <li>Отвёртка (обычно Phillips #0 или #1).</li>
+            <li>Пинцет для точной работы.</li>
+            <li>Мультиметр для проверки соединений.</li>
+            <li>Программатор (если микроконтроллер не прошит).</li>
+          </ul>
+          <!-- Placeholder for image -->
+          <div class="bg-gray-200 h-64 flex items-center justify-center my-4">
+            <p class="text-gray-500">[Изображение: набор инструментов для сборки клавиатуры]</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 3: Пайка переключателей</h3>
+          <p>Процесс:</p>
+          <ol class="list-decimal pl-6 mb-4">
+            <li>Вставьте переключатели в плату (убедитесь, что штырьки выровнены).</li>
+            <li>Нанесите небольшое количество припоя на каждый контакт.</li>
+            <li>Проверьте качество пайки (соединения должны быть блестящими и без трещин).</li>
+          </ol>
+          <p>Совет: Начните с угловых переключателей, чтобы зафиксировать плату.</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 4: Установка микроконтроллера</h3>
+          <p>Если микроконтроллер не припаян:</p>
+          <ol class="list-decimal pl-6 mb-4">
+            <li>Вставьте микроконтроллер в гнездо или припаяйте его к плате.</li>
+            <li>Подключите плату к компьютеру и проверьте распознавание.</li>
+            <li>Прошейте QMK или другую прошивку с помощью QMK Toolbox.</li>
+          </ol>
+        </div>
+
+        <!-- Step 5 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 5: Сборка корпуса</h3>
+          <p>Процесс:</p>
+          <ol class="list-decimal pl-6 mb-4">
+            <li>Установите плату в нижнюю часть корпуса.</li>
+            <li>Закрепите с помощью винтов (не перетягивайте).</li>
+            <li>Подключите половинки клавиатуры (если клавиатура разделённая) с помощью TRRS-кабеля.</li>
+            <li>Установите верхнюю часть корпуса или пластины.</li>
+          </ol>
+        </div>
+
+        <!-- Step 6 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 6: Установка кейкапов</h3>
+          <p>Наденьте кейкапы на переключатели, следуя выбранной раскладке. Убедитесь, что стабилизаторы (если есть) работают плавно.</p>
+          <!-- Placeholder for image -->
+          <div class="bg-gray-200 h-64 flex items-center justify-center my-4">
+            <p class="text-gray-500">[Изображение: клавиатура с установленными кейкапами]</p>
+          </div>
+        </div>
+
+        <!-- Step 7 -->
+        <div>
+          <h3 class="text-xl font-medium mb-2">Шаг 7: Тестирование и настройка</h3>
+          <p>Процесс:</p>
+          <ol class="list-decimal pl-6 mb-4">
+            <li>Подключите клавиатуру к компьютеру.</li>
+            <li>Проверьте каждую клавишу с помощью программы (например, VIA или онлайн-тестера).</li>
+            <li>Настройте раскладку через QMK Configurator или VIA.</li>
+            <li>Отрегулируйте угол наклона клавиатуры для комфорта.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- References -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Материалы и источники</h2>
+      <p>Для создания этого руководства были использованы следующие ресурсы:</p>
+      <ul class="list-disc pl-6 mb-4">
+        <li><a href="https://www.ergodox.io/" class="text-blue-600 hover:underline">ErgoDox Official Website</a> — информация о компонентах и сборке.</li>
+        <li><a href="https://qmk.fm/" class="text-blue-600 hover:underline">QMK Firmware Documentation</a> — руководство по прошивке.</li>
+        <li><a href="https://www.reddit.com/r/MechanicalKeyboards/" class="text-blue-600 hover:underline">r/MechanicalKeyboards</a> — советы сообщества по выбору переключателей и кейкапов.</li>
+        <li><a href="https://www.keyboard-design.com/" class="text-blue-600 hover:underline">Keyboard Design Guide</a> — основы эргономики клавиатур.</li>
+        <li><a href="https://docs.github.com/en/pages" class="text-blue-600 hover:underline">GitHub Pages Documentation</a> — руководство по развертыванию сайта.</li>
+      </ul>
+      <p>Компоненты можно приобрести в магазинах, таких как:</p>
+      <ul class="list-disc pl-6">
+        <li><a href="https://mechanicalkeyboards.com/" class="text-blue-600 hover:underline">MechanicalKeyboards.com</a></li>
+        <li><a href="https://www.aliexpress.com/" class="text-blue-600 hover:underline">AliExpress</a> (для кейкапов и переключателей)</li>
+        <li><a href="https://www.digikey.com/" class="text-blue-600 hover:underline">DigiKey</a> (для микроконтроллеров и электроники)</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="bg-gray-800 text-white py-6">
+    <div class="container mx-auto px-4">
+      <p>© 2025 Руководство по сборке эргономичной клавиатуры. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <script>
+    const toggleButton = document.getElementById('theme-toggle');
+    toggleButton.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      toggleButton.textContent = document.body.classList.contains('dark') ? 'Светлая тема' : 'Тёмная тема';
+    });
+  </script>
+</body>
+</html>
